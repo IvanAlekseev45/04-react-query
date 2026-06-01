@@ -1,8 +1,9 @@
 import SearchBar from "../SearchBar/SearchBar";
 import { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import type { Movie } from "../../types/movie";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import fetchMovies from "../../services/movieService";
 import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
@@ -26,10 +27,21 @@ const App = () => {
     queryKey: ["movies", query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: query !== "",
+    placeholderData: keepPreviousData,
   });
 
   const movies = moviesQuery.data?.results ?? [];
   const totalPages = moviesQuery.data?.total_pages ?? 0;
+
+  useEffect(() => {
+    if (moviesQuery.isSuccess && query !== "") {
+      if (movies.length === 0) {
+        toast.error("No movies found.");
+      } else {
+        toast.success("Movies loaded successfully.");
+      }
+    }
+  }, [moviesQuery.isSuccess, movies.length, query]);
 
   const handleSelectMovie = (movie: Movie) => {
     setSelectedMovie(movie);
